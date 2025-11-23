@@ -11,25 +11,36 @@ def extract_image(container, site):
     if not tag:
         return None
 
-    if site.get("image_type") == "data-ari":
+    # Dhaka Tribune style JSON inside data-ari
+    if site["image_type"] == "data-ari":
         data_ari = tag.get("data-ari")
-        if data_ari:
-            try:
-                data = json.loads(html.unescape(data_ari))
-                path = data.get("path")
-                if path:
-                    # Full URL already
-                    if path.startswith("http://") or path.startswith("https://"):
-                        return path
-                    if path.startswith("//"):
-                        return "https:" + path
-                    # If path starts with 'media/', prepend contents/cache/images/1100x618x1/uploads/
-                    if path.startswith("media/"):
-                        path = "contents/cache/images/1100x618x1/uploads/" + path
-                    # Join with base URL
-                    return urljoin(site["base_url"], path)
-            except json.JSONDecodeError:
+        if not data_ari:
+            return None
+
+        try:
+            data = json.loads(html.unescape(data_ari))
+            path = data.get("path")
+            if not path:
                 return None
+
+            if path.startswith("media/"):
+                return "https://ecdn.dhakatribune.net/" + path
+            if path.startswith("//"):
+                return "https:" + path
+            if path.startswith("/"):
+                return "https://ecdn.dhakatribune.net" + path
+        except:
+            return None
+
+    # Normal image attributes
+    for attr in ["src", "data-src", "data-lazy-src"]:
+        img = tag.get(attr)
+        if img:
+            if img.startswith("//"):
+                return "https:" + img
+            return urljoin(site["base_url"], img)
+
+    return None
 
 
 def extract_time(container, site, link):
