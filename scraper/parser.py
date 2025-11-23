@@ -21,24 +21,15 @@ def extract_image(container, site):
                     # Full URL already
                     if path.startswith("http://") or path.startswith("https://"):
                         return path
-                    # Starts with // → add https
                     if path.startswith("//"):
                         return "https:" + path
-                    # Relative path → join with base URL
+                    # If path starts with 'media/', prepend contents/cache/images/1100x618x1/uploads/
+                    if path.startswith("media/"):
+                        path = "contents/cache/images/1100x618x1/uploads/" + path
+                    # Join with base URL
                     return urljoin(site["base_url"], path)
             except json.JSONDecodeError:
                 return None
-
-    # Fallback: normal img attributes
-    for attr in ["src", "data-src", "data-lazy-src"]:
-        img = tag.get(attr)
-        if img:
-            img = img.strip()
-            if img.startswith("//"):
-                return "https:" + img
-            return urljoin(site["base_url"], img)
-
-    return None
 
 
 def extract_time(container, site, link):
