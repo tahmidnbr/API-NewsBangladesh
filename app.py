@@ -18,7 +18,7 @@ def fetch_news():
         try:
             collected += scrape_site(site)
         except Exception as e:
-            print("ERROR:", e)
+            print("ERROR scraping", site["source"], ":", e)
 
     all_news = collected
     print(f"Updated: {len(all_news)} articles")
@@ -28,14 +28,16 @@ def fetch_news():
 def show_news():
     global all_news
 
+    # limit query param
     limit = request.args.get("limit")
     limit = int(limit) if limit and limit.isdigit() else len(all_news)
 
-    # Group by source
+    # group news by source
     grouped = {}
     for item in all_news:
         grouped.setdefault(item["source"], []).append(item)
 
+    # round robin mixing
     iterators = {src: iter(items) for src, items in grouped.items()}
     sources = list(iterators.keys())
 
@@ -51,7 +53,6 @@ def show_news():
         except StopIteration:
             del iterators[src]
             sources.remove(src)
-
             if sources:
                 index = index % len(sources)
 
