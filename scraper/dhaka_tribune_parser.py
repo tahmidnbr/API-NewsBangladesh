@@ -3,7 +3,7 @@
 import json, html
 import requests
 from bs4 import BeautifulSoup
-from scraper.dhaka_tribune import fetch_dt_timestamp
+from utils.dhaka_tribune_time_utils import fetch_dt_timestamp
 from scraper.header import HEADERS
 
 def parse_dhaka_tribune(site):
