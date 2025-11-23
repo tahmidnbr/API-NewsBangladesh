@@ -11,31 +11,29 @@ def extract_image(container, site):
     if not tag:
         return None
 
-    # Dhaka Tribune style JSON inside data-ari
-    if site["image_type"] == "data-ari":
+    if site.get("image_type") == "data-ari":
         data_ari = tag.get("data-ari")
-        if not data_ari:
-            return None
-
-        try:
-            data = json.loads(html.unescape(data_ari))
-            path = data.get("path")
-            if not path:
+        if data_ari:
+            try:
+                data = json.loads(html.unescape(data_ari))
+                path = data.get("path")
+                if path:
+                    # Full URL already
+                    if path.startswith("http://") or path.startswith("https://"):
+                        return path
+                    # Starts with // → add https
+                    if path.startswith("//"):
+                        return "https:" + path
+                    # Relative path → join with base URL
+                    return urljoin(site["base_url"], path)
+            except json.JSONDecodeError:
                 return None
 
-            if path.startswith("media/"):
-                return "https://ecdn.dhakatribune.net/" + path
-            if path.startswith("//"):
-                return "https:" + path
-            if path.startswith("/"):
-                return "https://ecdn.dhakatribune.net" + path
-        except:
-            return None
-
-    # Normal image attributes
+    # Fallback: normal img attributes
     for attr in ["src", "data-src", "data-lazy-src"]:
         img = tag.get(attr)
         if img:
+            img = img.strip()
             if img.startswith("//"):
                 return "https:" + img
             return urljoin(site["base_url"], img)
